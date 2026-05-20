@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSTS Simulator: Escalation Protocol</title>
+    <style>
+        :root {
+            --term-bg: #050505;
+            --term-green: #00ff00;
+            --term-dim: #008800;
+            --term-red: #ff3333;
+            --term-orange: #ffaa00;
+            --term-blue: #00ccff;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: #000;
+            color: var(--term-green);
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #terminal-window {
+            background-color: var(--term-bg);
+            border: 2px solid var(--term-dim);
+            width: 100%;
+            max-width: 1000px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            position: relative;
+        }
+
+        #terminal-window::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .header {
+            border-bottom: 1px solid var(--term-dim);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            background-color: #0a0a0a;
+            z-index: 3;
+        }
+
+        .stats-bar { display: flex; gap: 20px; font-size: 0.9em; }
+        .stat { display: flex; align-items: center; gap: 5px; }
+        .stat-bar-outer { width: 100px; height: 10px; border: 1px solid var(--term-green); }
+        .stat-bar-inner { height: 100%; background-color: var(--term-green); transition: width 0.5s, background-color 0.5s; }
+
+        #console-area {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .log-entry { margin-bottom: 10px; line-height: 1.4; }
+        .sys-msg { color: var(--term-blue); }
+        .err-msg { color: var(--term-red); }
+        .warn-msg { color: var(--term-orange); }
+
+        .puzzle-box {
+            border: 1px dashed var(--term-dim);
+            padding: 15px;
+            background-color: rgba(0, 255, 0, 0.05);
+            margin: 15px 0;
+        }
+
+        .forensic-log {
+            font-size: 0.85em;
+            background-color: #000;
+            padding: 10px;
+            border-left: 3px solid var(--term-dim);
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+
+        input[type="text"] {
+            background-color: #000;
+            border: 1px solid var(--term-green);
+            color: var(--term-green);
+            font-family: var(--font-main);
+            padding: 5px;
+            width: 70%;
+            margin-top: 10px;
+            outline: none;
+        }
+
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        
+        button {
+            background-color: #000;
+            color: var(--term-green);
+            border: 1px solid var(--term-green);
+            font-family: var(--font-main);
+            padding: 10px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            z-index: 3;
+        }
+        button:hover { background-color: var(--term-green); color: #000; }
+        
+        .game-over-box {
+            border: 2px solid var(--term-red);
+            background-color: rgba(255, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+
+    </style>
+</head>
+<body>
+
+<div id="terminal-window">
+    <div class="header">
+        <div>NCSC_SIM: BESTUURLIJKE ESCALATIE PROTOCOL</div>
+        <div class="stats-bar">
+            <div class="stat">PATIËNTVEILIGHEID: <div class="stat-bar-outer"><div id="stat-pv" class="stat-bar-inner" style="width: 100%;"></div></div></div>
+            <div class="stat">SYSTEEMINTEGRITEIT: <div class="stat-bar-outer"><div id="stat-si" class="stat-bar-inner" style="width: 100%;"></div></div></div>
+            <div class="stat">VERTROUWEN: <div class="stat-bar-outer"><div id="stat-tr" class="stat-bar-inner" style="width: 100%;"></div></div></div>
+        </div>
+    </div>
+    <div id="console-area"></div>
+</div>
+
+<script>
+    let state = { pv: 100, si: 100, tr: 100 };
+    let consecutiveErrors = 0; 
+    let isGameOver = false;
+
+    const consoleArea = document.getElementById('console-area');
+
+    function updateStats(dpv, dsi, dtr, isCorrect) {
+        if (isGameOver) return;
+
+        if (isCorrect) {
+            consecutiveErrors = 0; 
+        } else {
+            consecutiveErrors++;
+        }
+
+        state.pv = Math.max(0, Math.min(100, state.pv + dpv));
+        state.si = Math.max(0, Math.min(100, state.si + dsi));
+        state.tr = Math.max(0, Math.min(100, state.tr + dtr));
+        
+        ['pv', 'si', 'tr'].forEach(id => {
+            const bar = document.getElementById(`stat-${id}`);
+            bar.style.width = state[id] + '%';
+            bar.style.backgroundColor = state[id] <= 25 ? 'var(--term-red)' : state[id] <= 50 ? 'var(--term-orange)' : 'var(--term-green)';
+        });
+
+        checkGameOver();
+    }
+
+    function checkGameOver() {
+        if (consecutiveErrors >= 3) {
+            triggerGameOver("3STRIKES");
+            return;
+        }
+        if (state.pv === 0) triggerGameOver("PV_ZERO");
+        if (state.si === 0) triggerGameOver("SI_ZERO");
+        if (state.tr === 0) triggerGameOver("TR_ZERO");
+    }
+
+    function triggerGameOver(reason) {
+        isGameOver = true;
+        clearConsole();
+        
+        let reasonTitle = "";
+        let reasonText = "";
+
+        switch (reason) {
+            case "PV_ZERO":
+                reasonTitle = "KRITIEK FALEN: PATIËNTVEILIGHEID COMPROMISGEVOELIG";
+                reasonText = "Je hebt de operationele zorg onverantwoorde risico's laten lopen. Levensreddende apparatuur is uitgevallen en ambulances moesten worden omgeleid. Je bestuurlijke laksheid heeft directe, fysieke slachtoffers geëist.";
+                break;
+            case "SI_ZERO":
+                reasonTitle = "KRITIEK FALEN: SYSTEEMINTEGRITEIT VERNIETIGD";
+                reasonText = "Hackers hebben de volledige controle over de vitale infrastructuur overgenomen. Back-ups zijn versleuteld en het netwerk is een digitale ruïne. Je hebt gefaald de technologische monocultuur te beschermen.";
+                break;
+            case "TR_ZERO":
+                reasonTitle = "KRITIEK FALEN: PUBLIEK VERTROUWEN VERDAMPT";
+                reasonText = "Door gebrek aan transparantie en compliance heeft het publiek, en de Inspectie, alle vertrouwen in jullie instelling verloren. De Autoriteit Persoonsgegevens (AP) grijpt in, de Raad van Bestuur is per direct ontslagen.";
+                break;
+            case "3STRIKES":
+                reasonTitle = "KRITIEK FALEN: BESTUURLIJKE INCOMPETENTIE";
+                reasonText = "Je hebt drie cruciale inschattingsfouten op rij gemaakt. Het incident is onbeheersbaar geworden. Het Nationaal Crisiscentrum (NCC) heeft de regie hardhandig overgenomen wegens falend lokaal leiderschap.";
+                document.getElementById('stat-si').style.width = '0%';
+                document.getElementById('stat-si').style.backgroundColor = 'var(--term-red)';
+                break;
+        }
+
+        const gameOverHtml = `
+            <div class="game-over-box">
+                <h1 style="color: var(--term-red); font-size: 2em; margin-bottom: 10px;"><span class="blink">[ SYSTEM FAILURE : GAME OVER ]</span></h1>
+                <h3 style="color: var(--term-orange);">${reasonTitle}</h3>
+                <p style="color: var(--term-green); font-size: 1.1em; line-height: 1.5;">${reasonText}</p>
+                <br>
+                <p>De 'governance-kloof' was te groot voor de huidige bestuursstructuur. Dit toont exact de noodzaak aan voor een proactief <b>Cyber-OMT</b>, waarbij het NCSC wél direct mag ingrijpen vóórdat u deze fouten kon maken.</p>
+                <button onclick="location.reload()" style="margin-top: 20px; border-color: var(--term-red); color: var(--term-red);">[ INITIATE SYSTEM REBOOT ]</button>
+            </div>
+        `;
+        
+        consoleArea.innerHTML = gameOverHtml;
+    }
+
+    function appendLog(text, type = '') {
+        if (isGameOver) return;
+        const div = document.createElement('div');
+        div.className = `log-entry ${type}`;
+        div.innerHTML = text;
+        consoleArea.appendChild(div);
+        consoleArea.scrollTop = consoleArea.scrollHeight;
+    }
+
+    function clearConsole() { if(!isGameOver) consoleArea.innerHTML = ''; }
+
+    // Task Engine
+    let currentLevel = 0;
+    let currentTask = 0;
+
+    const gameFlow = [
+        // LEVEL 1: MARKET GOVERNANCE (Micro)
+        {
+            title: "[NIVEAU 1]: MICRO-ESCALATIE (MARKET GOVERNANCE)",
+            tasks: [
+                {
+                    type: "input",
+                    text: "Context: HSE Ierland casus. Een medewerker klikt op een link. Jouw virusscanner staat op monitor-modus.<br><br><div class='puzzle-box'><b>OPDRACHT 1.1: LOG ANALYSE</b><br>Vind de Process ID (PID) van de kwaadaardige PowerShell executie in de log.</div><div class='forensic-log'>[TIME]     [PID]  [USER]        [COMMAND]\n08:14:22   3392   NURSE_01      outlook.exe /recycle\n08:15:06   4110   NURSE_01      cmd.exe /c \"wscript.exe invis.vbs\"\n08:15:08   5920   NURSE_01      powershell.exe -nop -w hidden -enc JABz...\n08:16:00   2048   SYSTEM        msmpeng.exe (Monitor Only)</div>",
+                    answer: "5920",
+                    successMsg: "[+] PID 5920 BEVESTIGD. Kwaadaardige dropper gedetecteerd.",
+                    failMsg: "[-] INCORRECT. De malware verspreidt zich snel in het ziekenhuis. (-25 Systeemintegriteit)",
+                    penalty: [0, -25, 0]
+                },
+                {
+                    type: "buttons",
+                    text: "<div class='puzzle-box'><b>OPDRACHT 1.2: INTERVENTIE</b><br>De ransomware-dropper is actief. Wat is je eerste in-house (Market) handeling?</div>",
+                    options: [
+                        { text: "A) Trek de netwerkkabel van de server fysiek uit de muur.", msg: "Netwerk geïsoleerd. Impact op de operatie, maar verdere infectie gestopt.", stats: [-10, +15, 0], correct: true },
+                        { text: "B) Laat IT op de achtergrond een virusscan draaien om de artsen niet te storen.", msg: "Fout. Malware versleutelt nu bestanden. Patiënten in direct gevaar.", stats: [-35, -30, -10], correct: false }
+                    ]
+                },
+                {
+                    type: "buttons",
+                    text: "<div class='puzzle-box'><b>OPDRACHT 1.3: COMMUNICATIE</b><br>Het virus is deels geïsoleerd, maar je weet niet hoever het in het ziekenhuis zit.</div>",
+                    options: [
+                        { text: "A) Roep code oranje uit en stuur een push-bericht naar alle medewerkers.", msg: "Transparant en veilig. Medewerkers zijn alert.", stats: [0, +10, +15], correct: true },
+                        { text: "B) Informeer alleen de Raad van Bestuur om reputatieschade te mijden.", msg: "Verkeerde prioriteit. Het virus verspreidt zich door onwetendheid.", stats: [-25, -20, -35], correct: false }
+                    ]
+                },
+                {
+                    type: "buttons",
+                    text: "<div class='puzzle-box'><b>OPDRACHT 1.4: MIDDELEN</b><br>De IT-afdeling is overwerkt en eist budget voor een externe Incident Response (IR) partij.</div>",
+                    options: [
+                        { text: "A) Keur budget direct goed en vlieg experts in.", msg: "Verantwoordelijk bestuur. Het lek wordt geanalyseerd.", stats: [0, +15, 0], correct: true },
+                        { text: "B) Weiger. Het is een IT-probleem, ze lossen het zelf maar op.", msg: "Zware nalatigheid. Dit is het falen van de interne Market governance.", stats: [-20, -30, -25], correct: false }
+                    ]
+                }
+            ]
+        },
+        // LEVEL 2: NETWORK GOVERNANCE (Meso)
+        {
+            title: "[NIVEAU 2]: MESO-ESCALATIE (NETWORK GOVERNANCE)",
+            tasks: [
+                {
+                    type: "input",
+                    text: "Context: OVV Citrix casus. Het incident kwam binnen via een lek in gedeelde software. Z-CERT slaat alarm voor de hele sector.<br><br><div class='puzzle-box'><b>OPDRACHT 2.1: WAF CONFIGURATIE</b><br>Z-CERT levert een tijdelijke rule om directory traversal (navigeren buiten de map) naar de map 'vpns' te blokkeren in de firewall. Typ het exacte commando dat begint met punt-punt-slash naar vpns.</div>",
+                    answer: "../vpns",
+                    successMsg: "[+] WAF RULE GEACCEPTEERD. Het lek is tijdelijk gedicht.",
+                    failMsg: "[-] SYNTAX ERROR. Achterdeur blijft wijd open voor hackers. (-25 Systeemintegriteit)",
+                    penalty: [0, -25, 0]
+                },
+                {
+                    type: "buttons",
+                    text: "<div class='puzzle-box'><b>OPDRACHT 2.2: SECTORALE DELING</b><br>Je hebt technische data (IoC's) verzameld. Wat doe je ermee?</div>",
+                    options: [
+                        { text: "A) Houd het binnenskamers. Het is bedrijfsgevoelige informatie.", msg: "Dit ondermijnt Netwerk Governance. De hele keten wordt verzwakt.", stats: [-15, -25, -30], correct: false },
+                        { text: "B) Deel alle logs real-time via het Z-CERT netwerk.", msg: "Top. De collectieve weerbaarheid stijgt direct.", stats: [+10, +15, +15], correct: true }
+                    ]
+                },
+                {
+                    type: "buttons",
+                    text: "<div class='puzzle-box'><b>OPDRACHT 2.3: KETENVERANTWOORDELIJKHEID</b><br>De softwareleverancier (Citrix) heeft nog 14 dagen nodig voor een patch.</div>",
+                    options: [
+                        { text: "A) Stuur als sector gezamenlijk een brandbrief en eis actie.", msg: "Je gebruikt netwerkmacht richting de leverancier.", stats: [0, +10, +10], correct: true },
+                        { text: "B) Accepteer het passief. De vendor is de baas.", msg: "Passief bestuur. Je neemt onverantwoorde risico's.", stats: [-25, -20, -15], correct: false }
+                    ]
+                },
+                {
+                    type: "buttons",
+                    text: "<div class='puzzle-box'><b>OPDRACHT 2.4: TIJDELIJKE MITIGATIE</b><br>Het netwerk adviseert om alle 20.000 wachtwoorden in de sector te resetten.</div>",
+                    options: [
+                        { text: "A) Voer de verplichte reset direct uit, ondanks geklaag van artsen.", msg: "Patiëntveiligheid primeert boven werkcomfort.", stats: [+10, +15, 0], correct: true },
+                        { text: "B) Stel het uit. Artsen hebben geen tijd voor nieuwe wachtwoorden.", msg: "De menselijke factor faalt. Accounts worden gehackt.", stats: [-30, -35, -20], correct: false }
+                    ]
+                }
+            ]
+        },
+        // LEVEL 3: GOVERNMENT (Macro)
+        {
+            title: "[NIVEAU 3]: MACRO-ESCALATIE (GOVERNMENT / LAW)",
+            tasks: [
+                {
+                    type: "input",
+                    text: "Context: HagaZiekenhuis / NIS2 wetgeving. Er is toch data gelekt. De inspectie zoekt naar de twee falende technische maatregelen (artikel 32 AVG).<br><br><div class='puzzle-box'><b>OPDRACHT 3.1: COMPLIANCE (AVG)</b><br>Is het:<br>A) Fysieke toegang<br>B) Tweefactorauthenticatie<br>C) Logging controle<br>D) Firewalls<br>Voer de twee letters in (bijv. AB).</div>",
+                    answer: "BC",
+                    successMsg: "[+] MAATREGELEN BEVESTIGD. Je toont bestuurlijke kennis.",
+                    failMsg: "[-] FOUTIEVE WETSKENNIS. Inspectie verhoogt direct het toezicht. (-30 Vertrouwen)",
+                    penalty: [0, -10, -30]
+                },
+                {
+                    type: "buttons",
+                    text: "<div class='puzzle-box'><b>OPDRACHT 3.2: MELDPLICHT (NIS2)</b><br>Binnen hoeveel uur moet de initiële melding (early warning) bij de toezichthouder liggen?</div>",
+                    options: [
+                        { text: "A) Binnen 24 uur.", msg: "Correct. De wet eist onmiddellijke transparantie.", stats: [0, 0, +20], correct: true },
+                        { text: "B) Pas nadat het onderzoek is afgerond.", msg: "Wetsontduiking. Dit resulteert direct in harde sancties.", stats: [0, -15, -40], correct: false }
+                    ]
+                },
+                {
+                    type: "buttons",
+                    text: "<div class='puzzle-box'><b>OPDRACHT 3.3: SANCTIE RESPONS</b><br>De AP legt een boete op van €460.000 (Government Governance). Wat doe je?</div>",
+                    options: [
+                        { text: "A) Huur advocaten in om de boete jarenlang juridisch aan te vechten.", msg: "Geld gaat naar advocaten in plaats van IT. Vertrouwen stort in.", stats: [0, -20, -35], correct: false },
+                        { text: "B) Accepteer de boete en investeer direct in IT-security.", msg: "Je neemt verantwoordelijkheid. De kloof wordt lokaal gedicht.", stats: [0, +20, +15], correct: true }
+                    ]
+                },
+                {
+                    type: "buttons",
+                    text: "<div class='puzzle-box'><b>OPDRACHT 3.4: BESTUURLIJKE AANSPRAKELIJKHEID</b><br>De pers stelt vragen. Wie is er eindverantwoordelijk in dit bestuursmodel?</div>",
+                    options: [
+                        { text: "A) De IT-afdeling. Zij hadden de systemen moeten beveiligen.", msg: "Ontwijkend. Onder NIS2 is het bestuur hoofdelijk aansprakelijk.", stats: [0, 0, -40], correct: false },
+                        { text: "B) De Raad van Bestuur. Cybersecurity ís patiëntveiligheid.", msg: "Exact. Maar een grotere cyberstorm is reeds ontketend...", stats: [0, 0, +15], correct: true }
+                    ]
+                }
+            ]
+        },
+        // LEVEL 4: CRISIS (Hard Power)
+        {
+            title: "[NIVEAU 4]: SYSTEEMCRISIS (HARD POWER)",
+            tasks: [
+                {
+                    type: "buttons",
+                    text: "Context: NHS WannaCry casus. Een ransomware worm verspreidt zich door 80 ziekenhuizen. Ambulances rijden rond zonder doel.<br><br><div class='puzzle-box'><b>OPDRACHT 4.1: TRIAGE</b><br>De malware infiltreert jullie Intensive Care (IC). Wat is je onmiddellijke actie?</div>",
+                    options: [
+                        { text: "A) Trek de stekker uit het complete netwerk, ook van levensreddende apparatuur.", msg: "Patiënten sterven direct door uitval van apparatuur.", stats: [-50, +20, -30], correct: false },
+                        { text: "B) Schakel over op autonome, analoge noodsystemen per afdeling.", msg: "De enige juiste medische keuze in een cyber-ramp.", stats: [+15, -10, 0], correct: true }
+                    ]
+                },
+                {
+                    type: "input",
+                    text: "<div class='puzzle-box'><b>OPDRACHT 4.2: THEORETISCH RAAMWERK</b><br>Typ het Engelse theorie-woord (Bevir, 2012) voor de ultieme bestuursvorm waarbij de staat regie overneemt met macht (M..., N... of G...).</div>",
+                    answer: "GOVERNMENT",
+                    successMsg: "[+] GOVERNMENT GEACCEPTEERD. Crisisbevoegdheden geactiveerd.",
+                    failMsg: "[-] THEORETISCHE FOUT. Je mist de noodbevoegdheden. Patiënten in gevaar.",
+                    penalty: [-30, -15, -20]
+                },
+                {
+                    type: "buttons",
+                    text: "<div class='puzzle-box'><b>OPDRACHT 4.3: CRISISCOMMUNICATIE</b><br>Het hele land is in paniek. Wie neemt de regie in de communicatie?</div>",
+                    options: [
+                        { text: "A) Elk ziekenhuis houdt zijn eigen persconferentie.", msg: "Totale chaos. Tegenstrijdige berichten vergroten de crisis.", stats: [-25, 0, -40], correct: false },
+                        { text: "B) De Nationaal Coördinator Terrorismebestrijding en Veiligheid (NCTV).", msg: "Een centrale boodschap stelt de maatschappij deels gerust.", stats: [+15, 0, +20], correct: true }
+                    ]
+                },
+                {
+                    type: "buttons",
+                    text: "<div class='puzzle-box'><b>OPDRACHT 4.4: OVERDRACHT VAN MACHT</b><br>Defensie Cyber Commando staat klaar om 'hot' in te breken in jullie systemen om de worm te verwijderen.</div>",
+                    options: [
+                        { text: "A) Weiger. Militairen in een medisch netwerk is te risicovol.", msg: "Systeem volledig verwoest. Absolute escalatie.", stats: [-60, -60, -60], correct: false },
+                        { text: "B) Accepteer. Draag de operationele regie over aan de Staat.", msg: "De overheid zet Hard Power in. De crisis wordt moeizaam gestopt.", stats: [+20, +30, 0], correct: true }
+                    ]
+                }
+            ]
+        }
+    ];
+
+    function startSimulation() {
+        clearConsole();
+        appendLog("==================================================", "sys-msg");
+        appendLog("INITIALISATIE GSTS ESCALATIE PROTOCOL");
+        appendLog("Doel: Ervaar de 'Governance-Kloof' in de praktijk.");
+        appendLog("Regels: Verlies je 1 van de 3 balken OF maak je 3 cruciale fouten op rij? Dan is het GAME OVER.");
+        appendLog("==================================================", "sys-msg");
+        setTimeout(() => loadLevel(), 3000);
+    }
+
+    function loadLevel() {
+        if (isGameOver) return;
+        
+        if (currentLevel >= gameFlow.length) {
+            endGame();
+            return;
+        }
+
+        if (currentTask === 0) {
+            clearConsole();
+            appendLog(gameFlow[currentLevel].title, "err-msg blink");
+        }
+
+        const taskData = gameFlow[currentLevel].tasks[currentTask];
+        renderTask(taskData);
+    }
+
+    function advanceTask() {
+        if (isGameOver) return;
+        currentTask++;
+        if (currentTask >= gameFlow[currentLevel].tasks.length) {
+            currentLevel++;
+            currentTask = 0;
+            appendLog("<br>[!] ESCALATIENIVEAU VOLTOOID. VOORBEREIDEN OP VOLGENDE FASE...", "sys-msg");
+            setTimeout(loadLevel, 3000);
+        } else {
+            setTimeout(loadLevel, 1500);
+        }
+    }
+
+    function renderTask(task) {
+        if (isGameOver) return;
+        
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = task.text;
+        consoleArea.appendChild(wrapper);
+
+        if (task.type === "input") {
+            const inputArea = document.createElement('div');
+            inputArea.innerHTML = `> INVOER: <input type="text" id="task-input"> <button id="task-btn" style="width:auto; padding:5px;">ENTER</button>`;
+            consoleArea.appendChild(inputArea);
+
+            document.getElementById('task-btn').onclick = () => {
+                if (isGameOver) return;
+                const val = document.getElementById('task-input').value.toUpperCase().trim();
+                const isCorrect = val === task.answer.toUpperCase();
+                
+                updateStats(
+                    isCorrect ? 0 : task.penalty[0], 
+                    isCorrect ? 0 : task.penalty[1], 
+                    isCorrect ? 0 : task.penalty[2], 
+                    isCorrect
+                );
+                
+                if (isGameOver) return;
+
+                if (isCorrect) {
+                    appendLog(task.successMsg, "sys-msg");
+                } else {
+                    appendLog(task.failMsg, "err-msg");
+                }
+                
+                inputArea.style.display = 'none'; 
+                advanceTask();
+            };
+        } 
+        else if (task.type === "buttons") {
+            const btnBox = document.createElement('div');
+            btnBox.className = 'btn-group';
+            
+            task.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.innerHTML = opt.text;
+                btn.onclick = () => {
+                    if (isGameOver) return;
+                    
+                    updateStats(opt.stats[0], opt.stats[1], opt.stats[2], opt.correct);
+                    if (isGameOver) return;
+
+                    appendLog(`<br>> GESELECTEERD: ${opt.text.substring(0, 20)}...`, "warn-msg");
+                    appendLog(`[Systeem] ${opt.msg}`, "sys-msg");
+                    btnBox.style.display = 'none';
+                    advanceTask();
+                };
+                btnBox.appendChild(btn);
+            });
+            consoleArea.appendChild(btnBox);
+        }
+        consoleArea.scrollTop = consoleArea.scrollHeight;
+    }
+
+    function endGame() {
+        if (isGameOver) return;
+        clearConsole();
+        appendLog("==================================================", "sys-msg");
+        appendLog("EVALUATIE & BELEIDSADVIES (HET CYBER-OMT)", "err-msg blink");
+        appendLog("==================================================", "sys-msg");
+        appendLog(`Eindscore: Patiëntveiligheid [${state.pv}%] | Integriteit [${state.si}%] | Vertrouwen [${state.tr}%]`);
+        
+        appendLog("<br>Gefeliciteerd. Je hebt de crisis bezworen, maar je hebt ervaren hoe pijnlijk en traag de huidige systemen zijn. De overheid straft achteraf (Niveau 3) of neemt pas regie als het land brandt (Niveau 4).");
+        appendLog("<br><div class='puzzle-box' style='border-color: var(--term-blue); color: var(--term-blue);'><b>DE OPLOSSING: HET CYBER-OMT</b><br>Wij pleiten voor een proactief bestuursmodel. Geef het NCSC bij een landelijke vitale dreiging direct de bevoegdheid (wettelijk mandaat) om technische mitigaties in private netwerken te injecteren. Stop de reactieve boetecultuur en start met proactieve landsverdediging.</div>");
+        
+        const btn = document.createElement('button');
+        btn.innerText = "[ REBOOT SIMULATIE ]";
+        btn.style.marginTop = "20px";
+        btn.onclick = () => location.reload();
+        consoleArea.appendChild(btn);
+    }
+
+    window.onload = startSimulation;
+
+</script>
+</body>
+</html>
