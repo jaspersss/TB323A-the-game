@@ -132,6 +132,50 @@
         .blink { animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
 
+        /* --- MOBIELE OPTIMALISATIE (Desktop blijft 100% intact) --- */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+            #terminal-window {
+                height: 100vh;
+                border: none;
+                border-radius: 0;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .stats-bar {
+                flex-direction: column;
+                width: 100%;
+                gap: 8px;
+            }
+            .stat {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .stat-bar-outer {
+                width: 50%;
+            }
+            #console-area {
+                padding: 15px;
+            }
+            input[type="text"] {
+                width: 100%;
+                box-sizing: border-box;
+                padding: 10px;
+            }
+            button {
+                padding: 15px;
+                font-size: 1em;
+            }
+            .forensic-log {
+                font-size: 0.7em;
+                overflow-x: auto;
+            }
+        }
     </style>
 </head>
 <body>
@@ -240,12 +284,10 @@
 
     function clearConsole() { if(!isGameOver) consoleArea.innerHTML = ''; }
 
-    // Task Engine
     let currentLevel = 0;
     let currentTask = 0;
 
     const gameFlow = [
-        // LEVEL 1: MARKET GOVERNANCE (Micro)
         {
             title: "[NIVEAU 1]: MICRO-ESCALATIE (MARKET GOVERNANCE)",
             tasks: [
@@ -283,7 +325,6 @@
                 }
             ]
         },
-        // LEVEL 2: NETWORK GOVERNANCE (Meso)
         {
             title: "[NIVEAU 2]: MESO-ESCALATIE (NETWORK GOVERNANCE)",
             tasks: [
@@ -321,7 +362,6 @@
                 }
             ]
         },
-        // LEVEL 3: GOVERNMENT (Macro)
         {
             title: "[NIVEAU 3]: MACRO-ESCALATIE (GOVERNMENT / LAW)",
             tasks: [
@@ -359,7 +399,6 @@
                 }
             ]
         },
-        // LEVEL 4: CRISIS (Hard Power)
         {
             title: "[NIVEAU 4]: SYSTEEMCRISIS (HARD POWER)",
             tasks: [
