@@ -217,16 +217,43 @@
         .modal-title { color: #aa0000; font-size: 1.5em; font-weight: bold; margin-bottom: 15px; }
         .modal-text { background: #fff; border: 2px inset #808080; padding: 15px; font-size: 1em; line-height: 1.4; margin-bottom: 15px; text-align: left;}
 
-        /* Mobile specific styling */
+        /* --- Mobile specific styling --- */
         @media (max-width: 768px) {
-            #game-window { height: 98vh; }
-            #main-area { flex-direction: column; }
-            #view-panel { width: 100%; height: 180px; border-right: none; border-bottom: 3px solid var(--window-border-dark); flex-shrink: 0;}
-            #console-panel { width: 100%; flex-grow: 1; padding: 10px; box-sizing: border-box;}
-            .scene-emoji { font-size: 50px; margin-bottom: 5px; }
+            body { padding: 0; }
+            #game-window { 
+                height: 100dvh; 
+                max-width: 100%; 
+                border: none; 
+                box-shadow: none;
+            }
+            .header { font-size: 0.9em; padding: 5px 10px; }
+            .stats-bar { padding: 5px; gap: 2px; }
+            .stat-box { width: 32%; font-size: 0.75em; gap: 2px; }
+            
+            #main-area { 
+                flex-direction: column; 
+                overflow-y: auto; 
+            }
+            #view-panel { 
+                width: 100%; 
+                height: auto; 
+                min-height: 160px; 
+                border-right: none; 
+                border-bottom: 3px solid var(--window-border-dark); 
+                flex-shrink: 0; 
+            }
+            #console-panel { 
+                width: 100%; 
+                flex-grow: 1; 
+                padding: 10px; 
+                box-sizing: border-box; 
+                overflow-y: visible; 
+                height: auto; 
+            }
+            
+            .scene-emoji { font-size: 45px; margin-bottom: 5px; }
             .scene-title { font-size: 1.2em; }
-            .stat-box { width: auto; flex-grow: 1; font-size: 0.8em;}
-            button.action-btn { font-size: 0.85em; padding: 12px 10px;}
+            button.action-btn { font-size: 0.9em; padding: 12px 10px; }
         }
     </style>
 </head>
@@ -234,7 +261,7 @@
 
 <div id="game-window">
     <div class="header">
-        <span id="loc-header">CYBER ADVENTURE v2.0</span>
+        <span id="loc-header">CYBER ADVENTURE v4.1</span>
         <span style="cursor: pointer;" onclick="location.reload()">[X]</span>
     </div>
     
@@ -244,6 +271,7 @@
         <div class="stat-box">PUBLIEK: <div class="stat-bar-outer"><div id="stat-tr" class="stat-bar-inner" style="width: 100%;"></div></div></div>
     </div>
     
+    <!-- Dit is het vlak dat op mobiel in zijn geheel scrolt -->
     <div id="main-area">
         <div id="view-panel">
             <div class="scene-image" id="room-visual"></div>
@@ -264,7 +292,7 @@
 
 <script>
     /* =========================================================================
-       HET JSON DATAMODEL (Inclusief bronnen & dualiteits-checks)
+       HET JSON DATAMODEL
        ========================================================================= */
     const gameData = {
         "stages": [
@@ -273,47 +301,47 @@
                 "character": "Dr. Sanne (Arts)",
                 "location": "Begane Grond: SEH",
                 "visual": "<div class='scene-emoji'>🩺🚑</div><div class='scene-title'>Spoedeisende Hulp</div>",
-                "intro": "Je bent Dr. Sanne. Een kritieke patiënt komt binnen. IT heeft net een zware inlogbeveiliging doorgevoerd. Je terminal blokkeert.",
+                "intro": "Je bent Dr. Sanne. Een kritieke patiënt komt binnen. Elke seconde telt. De IT-afdeling heeft zojuist een nieuw inlogbeleid uitgerold, waardoor je terminal is vergrendeld.",
                 "tasks": [
                     {
                         "type": "multiple_choice",
-                        "instruction": "DOELOPDRACHT: Je moet razendsnel in het patiëntendossier. Je collega reikt je een illegale USB-bypass aan om het wachtwoord te omzeilen. Wat doe je?",
+                        "instruction": "DOELOPDRACHT: Je moet razendsnel het allergiedossier van de patiënt inzien voordat je medicatie toedient. Je collega reikt je stiekem een 'USB-hack' aan die de terminal forceert om open te blijven. Gebruik je deze hack?",
                         "options": [
-                            {"label": "Gebruik de bypass. Ik moet nú levens redden, IT-regels hinderen de patiëntenzorg.", "correct": true, "msg": "Operationeel begrijpelijk. Volgens Lawal (2021) is dit typisch: hoge werkdruk in de zorg leidt ertoe dat personeel de veiligheidsregels negeert.", "stats": [10, -20, 0], "flag": "doctor_chose_care"},
-                            {"label": "Weiger. Ik log netjes in via de trage tweefactorauthenticatie.", "correct": false, "msg": "IT-compliance is hoog, maar de patiënt loopt kritieke schade op. Een enorme klinische fout.", "stats": [-20, 10, 0], "flag": "doctor_chose_rules"}
+                            {"label": "Ja, ik gebruik de hack. Levens redden is nu het allerbelangrijkste. IT-regels moeten maar even wachten.", "correct": true, "msg": "Je plugt de USB-stick in en het scherm licht direct op. Je ziet de allergieën van de patiënt en dient veilig de medicatie toe; de patiënt is gestabiliseerd! Echter, op de achtergrond staat deze computer nu wagenwijd open voor hackers. (Zoals de onderzoeker Lawal in 2021 aantoonde: medisch personeel negeert IT-regels bijna altijd als de klinische werkdruk te hoog wordt).", "stats": [10, -20, 0], "flag": "doctor_chose_care"},
+                            {"label": "Nee, ik weiger de hack. Ik log netjes in via de trage tweefactorauthenticatie.", "correct": false, "msg": "Je begint gefrustreerd je wachtwoord in te typen en wacht op de SMS-code. Het inloggen duurt anderhalve minuut. In die tijd raakt de patiënt in een shock. De IT-afdeling is superblij met je brave gedrag, maar je hebt medisch gezien een gigantisch risico genomen door de zorg te vertragen.", "stats": [-20, 10, 0], "flag": "doctor_chose_rules"}
                         ]
                     },
                     {
                         "type": "multiple_choice",
-                        "instruction": "De verpleging is boos op de IT-afdeling. Hoe moet het ziekenhuisbestuur deze frictie tussen de 'werkvloer' en 'IT' in de toekomst regelen?",
+                        "instruction": "De verpleging is boos op de IT-afdeling en weigert te werken met de trage systemen. Hoe moet het ziekenhuisbestuur deze frictie tussen de 'werkvloer' en 'IT' in de toekomst regelen?",
                         "options": [
-                            {"label": "Delegeren aan de artsen: laat de werkvloer zelf bepalen welke IT-regels ze wel en niet volgen.", "correct": false, "msg": "Fout. Dat is geen sturing, dat is anarchie. Het netwerk stort direct in.", "stats": [0, -20, -10]},
-                            {"label": "Beleid maken waarbij cybersecurity niet in de weg staat van zorgprocessen.", "correct": true, "msg": "Precies. Coventry & Branley (2018) waarschuwen dat security áltijd in balans moet zijn met het zorgproces, anders faalt het.", "stats": [10, 10, 0]}
+                            {"label": "Door keihard in te grijpen en formele straffen uit te delen aan personeel dat de IT-regels breekt.", "correct": false, "msg": "Doordat je keihard straft, durft niemand op de afdeling meer eerlijk te zijn. Verpleegkundigen schrijven nu stiekem wachtwoorden op hun hand en delen pasjes om snel in te loggen. Repressie creëert een levensgevaarlijke 'doofpotcultuur' op de afdeling.", "stats": [0, -20, -10]},
+                            {"label": "Door IT en de artsen samen te laten zoeken naar een veilig inlogsysteem dat wél past bij de snelheid van de zorg.", "correct": true, "msg": "Je nodigt de IT-beheerder uit voor een nachtdienst. Hij schrikt van de hectiek en bouwt samen met jullie een systeem met een snelle personeels-scanpas. (De onderzoekers Coventry & Branley waarschuwden in 2018 al: cybersecurity faalt áltijd als het niet in balans is met het primaire zorgproces).", "stats": [10, 10, 0]}
                         ]
                     },
                     {
                         "type": "multiple_choice",
-                        "instruction": "Je collega opent een bijlage. Het scherm flikkert rood en bestanden worden versleuteld. Wat is je eerste instinct als arts?",
+                        "instruction": "Een collega opent op jouw ontgrendelde terminal snel een persoonlijk mailtje. Opeens verschijnt er een rode doodskop op het scherm en verdwijnen je patiëntendossiers achter slot en grendel. Wat is je eerste instinct als arts?",
                         "options": [
-                            {"label": "Trek direct de netwerkkabel van de computer eruit.", "correct": true, "msg": "Perfect! Lokale, fysieke isolatie is de meest effectieve eerste stap bij een incident.", "stats": [0, 15, 0], "flag": "doctor_pulled_plug"},
-                            {"label": "Mail de helpdesk en wacht op antwoord.", "correct": false, "msg": "Fout! Terwijl je wacht, kruipt de ransomware via de netwerkkabel naar andere afdelingen.", "stats": [0, -25, 0]}
+                            {"label": "Ik duik onder het bureau en trek de netwerkkabel van de computer direct uit de muur.", "correct": true, "msg": "Een uitstekende fysieke reflex! Door de kabel eruit te trekken, knip je de besmette computer los van de rest van het ziekenhuis. Je bent hier lokaal je gegevens kwijt, maar je hebt waarschijnlijk de servers van de rest van het gebouw gered.", "stats": [0, 15, 0], "flag": "doctor_pulled_plug"},
+                            {"label": "Ik open mijn mail op mijn telefoon en stuur een melding naar de IT-helpdesk.", "correct": false, "msg": "Terwijl jij rustig een mailtje aan het typen bent op je telefoon, kruipt het ransomware-virus via de netwerkkabel pijlsnel de muur in richting de centrale servers. Tegen de tijd dat IT je mailtje leest, is de Intensive Care al besmet.", "stats": [0, -25, 0]}
                         ]
                     },
                     {
                         "type": "slider",
-                        "instruction": "De familie van de patiënt eist antwoorden over de IT-chaos. Hoeveel % van de waarheid vertel je ze over de mogelijke hack?",
+                        "instruction": "De terminal is onbruikbaar en er ontstaat chaos op de afdeling. De familie van de patiënt eist luidkeels antwoorden. Hoeveel % van de waarheid vertel je ze over de mogelijke hack?",
                         "min": 0, "max": 100, "step": 10, "start": 50, "unit": "%",
                         "validate": "val >= 80",
-                        "msgSuccess": "Transparantie wekt vertrouwen. Eerlijkheid is de beste communicatiestrategie in de zorg.",
-                        "msgFail": "Door te liegen escaleer je de boel. De familie verliest al het vertrouwen en belt de media.",
+                        "msgSuccess": "Je vertelt eerlijk dat het computersysteem hapert door een mogelijk virus, maar dat jullie overstappen op papieren noodprotocollen. De familie is bezorgd, maar waardeert je eerlijkheid enorm. Vertrouwen gered!",
+                        "msgFail": "Je liegt en zegt dat er 'gewoon een kleine stroomstoring' is. Als de lokale pers buiten staat omdat alle ambulances worden omgeleid, komt de familie erachter dat je loog. Ze maken stennis en de sfeer wordt explosief.",
                         "penalty": [-10, 0, -20]
                     },
                     {
                         "type": "multiple_choice",
-                        "instruction": "Je hebt dit probleem lokaal op je afdeling aangepakt, zonder de rest van de sector in te lichten. Wat is het governance-risico hiervan?",
+                        "instruction": "Je besluit de kapotte computer stilletjes in een kast te zetten en het lokaal op te lossen met papier, zonder de rest van de sector in te lichten. Wat is het governance-risico hiervan?",
                         "options": [
-                            {"label": "Geen, onze afdeling is onafhankelijk en kan zelf problemen oplossen.", "correct": false, "msg": "Blind voor de keten. Als jij besmet bent, is het hele ziekenhuisnetwerk in gevaar.", "stats": [0, -15, 0]},
-                            {"label": "We delen onze leermomenten niet. Sectorale veiligheid vereist keten-samenwerking.", "correct": true, "msg": "Juist. Zonder kennisdeling in het netwerk blijven alle andere ziekenhuizen kwetsbaar.", "stats": [0, 10, 0]}
+                            {"label": "Geen, onze afdeling is onafhankelijk en kan zelf problemen oplossen.", "correct": false, "msg": "Je redt weliswaar je eigen straatje, maar je bent compleet blind voor de keten. Jouw stilzwijgen brengt andere ziekenhuizen in gevaar.", "stats": [0, -15, 0]},
+                            {"label": "We delen onze leermomenten niet. Sectorale veiligheid vereist keten-samenwerking.", "correct": true, "msg": "Juist. Zonder kennisdeling in het netwerk blijven andere instellingen kwetsbaar. Eigen autonomie belemmert de sectorale veiligheid.", "stats": [0, 10, 0]}
                         ]
                     }
                 ]
@@ -323,50 +351,50 @@
                 "character": "Tim (Lead IT)",
                 "location": "Kelder: Serverruimte",
                 "visual": "<div class='scene-emoji'>💾🖧</div><div class='scene-title'>Serverruimte</div>",
-                "intro": "Je bent Systeembeheerder Tim. Het SEH-incident escaleert. De malware zoekt via de Citrix-servers een weg naar andere ziekenhuizen.",
+                "intro": "Je bent Systeembeheerder Tim. Je staat in de donkere serverruimte. Het incident op de SEH escaleert. Het blijkt ransomware die zich via een lek in jullie Citrix-netwerk razendsnel verspreidt.",
                 "tasks": [
                     {
                         "type": "input",
-                        "instruction": "DOELOPDRACHT: Z-CERT (het sectorale crisisteam) meldt dat je een lek in de map 'vpns' moet blokkeren met een 'punt-punt-slash' firewall commando. Typ de juiste code:",
+                        "instruction": "DOELOPDRACHT: Z-CERT (het sectorale crisisteam) meldt dat je een lek in de map 'vpns' moet blokkeren met een 'punt-punt-slash' firewall commando. Typ het in om de aanval te stoppen:",
                         "answer": "../VPNS",
                         "synonyms": ["../VPNS/"],
-                        "msgSuccess": "Firewall-rule actief. Het lek is tijdelijk dichtgemetseld.",
-                        "msgFail": "Syntax error. De achterdeur staat nog wijd open.",
+                        "msgSuccess": "Je ramt op Enter en de firewall-regel wordt actief. De rode lampjes op de servers stoppen met knipperen. Het lek is tijdelijk dichtgemetseld en de aanval is afgewend. Goed werk!",
+                        "msgFail": "Typfout! De firewall herkent je commando niet. Terwijl je probeert je fout te corrigeren, zie je hoe gigabytes aan patiëntendata vliegensvlug over het netwerk worden weggesluisd.",
                         "penalty": [0, -25, 0]
                     },
                     {
                         "type": "multiple_choice",
-                        "instruction": "De softwareleverancier zegt pas over 14 dagen een patch te hebben. De directie wil wachten. Wat doe jij?",
+                        "instruction": "De softwareleverancier (Citrix) zegt pas over 14 dagen een update te hebben. De directie wil wachten. Wat doe jij?",
                         "options": [
-                            {"label": "Ik dwing alle medewerkers in het ziekenhuis nu lokaal hun wachtwoord te resetten.", "correct": true, "msg": "Je pakt lokaal de regie terug en neemt het zekere voor het onzekere.", "stats": [0, 15, 0]},
-                            {"label": "Ik wacht af. De leverancier is verantwoordelijk voor de software.", "correct": false, "msg": "Passief beleid. In die 14 dagen wordt het ziekenhuis gegarandeerd gegijzeld.", "stats": [0, -20, 0], "flag": "it_waited_for_patch"}
+                            {"label": "Ik wacht niet af en forceer álle medewerkers in het gebouw nú direct om lokaal een nieuw, lang wachtwoord in te stellen.", "correct": true, "msg": "Je rolt de reset uit. De helpdesk ontploft van de klagende en scheldende artsen, maar door deze drastische actie pak je wel de controle terug. Hackers met gestolen wachtwoorden stoten nu hun neus.", "stats": [0, 15, 0]},
+                            {"label": "Ik luister naar de directie. We wachten af; de leverancier is uiteindelijk verantwoordelijk voor hun eigen software.", "correct": false, "msg": "Je leunt achterover en wacht op de update. Wat je niet doorhad: de hackers zaten al lang in jullie systeem rond te neuzen. In de 14 dagen dat jullie passief afwachtten, hebben ze het hele ziekenhuis gegijzeld.", "stats": [0, -20, 0], "flag": "it_waited_for_patch"}
                         ]
                     },
                     {
                         "type": "multiple_choice",
-                        "instruction": "Je vindt de IP-adressen (IoC's) van de hackers. Z-CERT vraagt je deze te delen om andere ziekenhuizen te redden. Jouw directeur verbiedt dit uit reputatie-angst.",
+                        "instruction": "Je vindt in jouw systemen de digitale sporen (IP-adressen) van de hackers. Z-CERT vraagt je deze 'blauwdruk' onmiddellijk te delen om het hele land te waarschuwen. Jouw directeur verbiedt dit resoluut uit angst voor imagoschade.",
                         "contradicts": "doctor_chose_care",
-                        "contradiction_msg": "Ho even! Toen je zélf als arts op de SEH stond, wilde je dat alle regels opzij werden gezet om mensen te redden. Nu je bij de IT zit, laat je patiënten in ándere ziekenhuizen stikken puur omdat je directeur bang is voor de PR? Dat is pas hypocriet!",
+                        "contradiction_msg": "Ho even! Toen je zélf als arts op de SEH stond, was je bereid alle IT-regels aan je laars te lappen met een USB-stick om mensenlevens te redden. Nu je bij de IT zit, overweeg je ineens om patiënten in ándere ziekenhuizen in gevaar te brengen, puur omdat je baas bang is voor een beetje slechte PR? Wat is het nou: patiënten redden of regeltjes volgen?",
                         "options": [
-                            {"label": "Ik gehoorzaam de directeur en houd de data geheim.", "correct": false, "msg": "Je gehoorzaamt de hiërarchie, maar het sectorale netwerk wordt blind aangevallen.", "stats": [0, -20, -10], "flag": "it_hid_data"},
-                            {"label": "Ik overtreed de instructie en deel de data openlijk in de sector.", "correct": true, "msg": "Netwerksturing! Volgens de OVV (Citrix, 2021) is samenwerking cruciaal bij gedeelde software.", "stats": [10, 10, 10], "flag": "it_shared_data"}
+                            {"label": "Ik gehoorzaam de directeur. Baas is baas, de data blijft geheim.", "correct": false, "msg": "Je wist de logs en zwijgt. Binnen jullie muren lijkt de storm te gaan liggen. Maar drie dagen later hoor je dat het streekziekenhuis verderop volledig is platgelegd door exáct dezelfde hackers. Omdat jij weigerde te waarschuwen, hebben zij zich niet kunnen verdedigen.", "stats": [0, -20, -10], "flag": "it_hid_data"},
+                            {"label": "Ik overtreed de instructie van mijn directeur en deel de data openlijk in de sector.", "correct": true, "msg": "Je drukt op verzenden. Binnen een kwartier hebben tientallen andere ziekenhuizen de hackers buitengesloten! Je directeur is des duivels, maar zoals de Onderzoeksraad voor Veiligheid (2021) aantoonde: transparant samenwerken is letterlijk de enige manier om de keten te redden.", "stats": [10, 10, 10], "flag": "it_shared_data"}
                         ]
                     },
                     {
                         "type": "clicktext",
-                        "instruction": "De samenwerking met Z-CERT leunt zwaar op één verplichte norm in de gezondheidszorg. Welke is dat? Klik op de juiste in het logboek.",
-                        "content": "NORMDOCUMENTEN:<br>[ <span class='click-target' data-val='fout'>ISO 9001 - Kwaliteit</span> ]<br>[ <span class='click-target' data-val='goed'>NEN 7510 - Zorginformatie</span> ]<br>[ <span class='click-target' data-val='fout'>ISO 14001 - Voedsel</span> ]",
+                        "instruction": "Deze hele reddingsactie met Z-CERT kan alleen slagen als álle ziekenhuizen dezelfde taal spreken qua beveiliging. Wat is hiervoor de wettelijke standaard? Klik in het logboek op de juiste norm.",
+                        "content": "NORMDOCUMENTEN:<br>[ <span class='click-target' data-val='fout'>ISO 9001 - Kwaliteitsmanagement</span> ]<br>[ <span class='click-target' data-val='goed'>NEN 7510 - Informatiebeveiliging in de Zorg</span> ]<br>[ <span class='click-target' data-val='fout'>ISO 14001 - Milieu en Voedsel</span> ]",
                         "correctVal": "goed",
-                        "msgSuccess": "NEN 7510. Dit is de wettelijk vereiste basislijn in de Nederlandse zorg.",
-                        "msgFail": "Fout. Je mist de basiskennis van regelgeving in jouw eigen sector.",
+                        "msgSuccess": "Je selecteert NEN 7510. Dit is inderdaad het absolute fundament. Ziekenhuizen die niet aan de NEN 7510 voldoen, vormen een blinde vlek in het zorgnetwerk.",
+                        "msgFail": "Je klikt de verkeerde aan. Als een IT-manager de basisnormen van de zorg niet kent, is de basis voor een veilige keten-samenwerking ver te zoeken.",
                         "penalty": [0, -15, -15]
                     },
                     {
                         "type": "multiple_choice",
-                        "instruction": "Waarom is het gevaarlijk dat vrijwel elk ziekenhuis in Nederland exact dezelfde inlogsoftware (Citrix) gebruikt?",
+                        "instruction": "De grote les van vandaag: vrijwel álle zorginstellingen werken met dezelfde leverancier (Citrix) en vallen dus tegelijkertijd om als er één lek in de software zit. Hoe noemt men dit fenomeen?",
                         "options": [
-                            {"label": "Omdat er sprake is van een Technologische Monocultuur.", "correct": true, "msg": "Precies. Zoals het OVV-rapport stelt: als er één software-lek is, valt de hele sector om.", "stats": [0, 10, 0]},
-                            {"label": "Omdat software altijd duur is.", "correct": false, "msg": "Onzin. Het risico zit in de gedeelde kwetsbaarheid, niet de prijs.", "stats": [0, -10, 0]}
+                            {"label": "Een Technologische Monocultuur.", "correct": true, "msg": "Precies. Dit is een klassiek voorbeeld van een technologische monocultuur. Als de boer maar één soort aardappel plant, vernietigt één ziektespoor de hele oogst. In de IT is dit levensgevaarlijk.", "stats": [0, 10, 0]},
+                            {"label": "Een Open-Source Kwetsbaarheid.", "correct": false, "msg": "Nee, de software is juist gesloten en commercieel. Het probleem is simpelweg dat we massaal op één enkel bedrijf leunen (Vendor Lock-in).", "stats": [0, -10, 0]}
                         ]
                     }
                 ]
@@ -376,52 +404,52 @@
                 "character": "Roos (Directeur/RvB)",
                 "location": "Verdieping 4: Directiekamer",
                 "visual": "<div class='scene-emoji'>🏢👔</div><div class='scene-title'>Raad van Bestuur</div>",
-                "intro": "Je bent Directeur Roos. De Autoriteit Persoonsgegevens en de Inspectie (IGJ) staan op de stoep om de incidenten van vorige week te onderzoeken.",
+                "intro": "Je bent Directeur Roos. Je kijkt uit het raam van je kantoor. De beslissingen van je arts en IT'er komen nu keihard op jouw bestuurstafel terecht. De Autoriteit Persoonsgegevens (AP) stapt je kantoor binnen.",
                 "tasks": [
                     {
                         "type": "multiple_choice",
-                        "instruction": "DOELOPDRACHT: De arts op de SEH heeft een illegale USB-bypass gebruikt. De toezichthouder (AP) deelt een boete uit van €460.000 (vgl. HagaZiekenhuis). Hoe reageer je?",
+                        "instruction": "DOELOPDRACHT: De Inspectie constateert dat de arts op de SEH een patiëntendossier benaderde zonder de verplichte inlog-codes. Ze eisen een ongekende boete van €460.000. Hoe reageer je?",
                         "contradicts": "doctor_chose_care",
-                        "contradiction_msg": "Wacht eens even! In de eerste ronde was jijzelf de arts die deze illegale USB-bypass gebruikte 'om levens te redden'. Nu ben je directeur en wil je opeens diezelfde arts voor de bus gooien om je eigen boete te ontlopen? Dat is zwak leiderschap!",
+                        "contradiction_msg": "Wacht eens heel even! In Ronde 1 was JIJZELF de arts die deze regels aan zijn laars lapte en die USB-stick erin stak 'om levens te redden'. En nu je op de directiestoel zit, wil je ineens de schuld afschuiven op 'die lakse werkvloer' om je eigen boete te ontlopen? Dat is de ultieme definitie van een bestuurlijke kloof!",
                         "options": [
-                            {"label": "Ik huur advocaten in en leg de schuld bij de individuele arts. Zij brak de protocollen.", "correct": false, "msg": "Fout. Onder de governance-wetten (NIS2/AVG) is de Raad van Bestuur eindverantwoordelijk, niet de werkvloer.", "stats": [0, 0, -30]},
-                            {"label": "Ik accepteer de boete. Het is bestuurlijk falen. We gaan de IT-cultuur vanaf de top verbeteren.", "correct": true, "msg": "Leiderschap getoond. Je respecteert de overheidssturing via de wet.", "stats": [0, 15, 10]}
+                            {"label": "Ik weiger te betalen! Ik huur advocaten in en wijs naar de arts op de werkvloer; zij brak de regels, niet ik.", "correct": false, "msg": "Je start een slepende rechtszaak. De rechtbank oordeelt snoeihard: onder de nieuwe wetgeving ben jíj als Raad van Bestuur hoofdelijk aansprakelijk voor het ontbreken van veiligheidsbeleid. Je verliest de zaak én het respect van je medewerkers.", "stats": [0, 0, -30]},
+                            {"label": "Ik slik mijn trots in en accepteer de boete. Het bestuurlijke falen ligt bij mij. We gaan de IT vanaf de fundamenten opbouwen.", "correct": true, "msg": "Het voelt als een keiharde nederlaag en de boete doet financieel pijn, maar je toont écht leiderschap. Je snapt dat de overheid hier dwingend mag sturen.", "stats": [0, 15, 10]}
                         ]
                     },
                     {
                         "type": "clicktext",
-                        "instruction": "De toezichthouder eist bewijs van Artikel 32 AVG (Beveiliging van de verwerking). Wat ontbrak er technisch op de patiëntendossiers?",
-                        "content": "AUDIT RESULTAAT:<br>Het ziekenhuis had wel <span class='click-target' data-val='fout'>Cameratoezicht</span>, maar verzuimde om <span class='click-target' data-val='goed'>Tweefactorauthenticatie (MFA)</span> af te dwingen voor dossiers.",
+                        "instruction": "De AP eist bewijs dat je begrijpt welke beveiliging ontbrak op de patiëntendossiers. Klik op de wettelijk verplichte maatregel in dit auditrapport:",
+                        "content": "AUDIT RESULTAAT:<br>Het ziekenhuis had wel <span class='click-target' data-val='fout'>Cameratoezicht in de wandelgangen</span> geïnstalleerd, maar het bestuur verzuimde structureel om <span class='click-target' data-val='goed'>Tweefactorauthenticatie (MFA)</span> af te dwingen op digitale patiëntendossiers.",
                         "correctVal": "goed",
-                        "msgSuccess": "MFA is correct. De AP beboette het HagaZiekenhuis hier zwaar op in 2019.",
-                        "msgFail": "Fout. Fysieke bewaking stopt geen hackers op een digitaal netwerk.",
+                        "msgSuccess": "Je selecteert MFA. Een simpel wachtwoord alleen is in de zorg simpelweg illegaal geworden (Artikel 32 AVG).",
+                        "msgFail": "Je wijst naar het cameratoezicht. De inspecteur schudt zijn hoofd: fysieke camera's houden geen hackers tegen die vanaf een zolderkamer in het buitenland inbreken.",
                         "penalty": [0, -10, -20]
                     },
                     {
                         "type": "slider",
-                        "instruction": "De nieuwe NIS2-richtlijn dwingt ziekenhuizen om cyberincidenten razendsnel te melden, anders volgen miljoenenboetes. Binnen hoeveel uur móét de 'early-warning' verstuurd zijn?",
-                        "min": 12, "max": 72, "step": 12, "start": 72, "unit": "h",
+                        "instruction": "De nieuwe Europese NIS2-richtlijn dwingt je om elk cyberincident razendsnel te melden, anders volgen er gigantische straffen. Binnen hoeveel uur verplicht de wet je om een eerste 'early-warning' te sturen?",
+                        "min": 12, "max": 72, "step": 12, "start": 72, "unit": " uur",
                         "validate": "val === 24",
-                        "msgSuccess": "24 uur is correct. De overheid eist via NIS2 directe transparantie.",
-                        "msgFail": "Te laat! Onder NIS2 leidt dit tot zware bestuurlijke boetes voor de RvB.",
+                        "msgSuccess": "Je selecteert 24 uur. Dat klopt. De overheid eist bliksemsnelle transparantie zodat zij overzicht hebben over een eventuele landelijke crisis.",
+                        "msgFail": "Verkeerd ingeschat! Je melding komt veel te laat. De toezichthouder ziet dit als verzwijgen; de NIS2-wetgeving straft dit af met astronomische boetes voor bestuurders.",
                         "penalty": [0, 0, -25]
                     },
                     {
                         "type": "multiple_choice",
-                        "instruction": "Je hebt nog €1 Miljoen reservebudget over. Waar investeer je het in?",
+                        "instruction": "Je hebt de boete betaald. Er is nog €1 Miljoen in je budget. De Systeembeheerder eist dit geld voor de servers. De Medisch Directeur eist dit geld voor een nieuwe MRI-Scanner om dodelijke wachtlijsten weg te werken. Wat beslis je?",
                         "options": [
-                            {"label": "Een nieuwe MRI-Scanner, want wachttijden kosten nu zichtbaar levens.", "correct": false, "msg": "Korte termijn focus. Zoals Ghafur (2019) stelt: chronische onderfinanciering van IT in de zorg leidt tot totale ineenstorting.", "stats": [15, -30, 0]},
-                            {"label": "Het vervangen van zwaar verouderde IT-systemen (cybersecurity).", "correct": true, "msg": "Pijnlijk voor de wachttijden, maar je dekt het fundamentele systeemrisico af.", "stats": [0, 20, 0]}
+                            {"label": "De nieuwe MRI-Scanner. Die wachttijden kosten op dit moment letterlijk levens. Dat kun je patiënten niet aandoen.", "correct": false, "msg": "Je kiest voor applaus op de korte termijn. De lokale krant is lovend, maar op de achtergrond tikt de digitale tijdbom keihard door. De wetenschapper Ghafur (2019) waarschuwde hier al voor: onderfinanciering van IT in de zorg leidt onvermijdelijk tot ineenstorting van het héle ziekenhuis.", "stats": [15, -30, 0]},
+                            {"label": "Het vervangen van de IT-systemen. Zonder veilig fundament stort straks het hele ziekenhuis in.", "correct": true, "msg": "Het is een verschrikkelijk pijnlijke beslissing. De wachtlijsten lopen verder op en de artsen protesteren openlijk. Toch heb je het ziekenhuis behoed voor een wisse digitale dood. Je dekt het systeemrisico af.", "stats": [0, 20, 0]}
                         ]
                     },
                     {
                         "type": "multiple_choice",
-                        "instruction": "Wat is het gevaar (de governance-kloof) als de overheid alleen maar achteraf met torenhoge boetes blijft strooien?",
+                        "instruction": "Wat is het gevaarlijke neveneffect (de governance-kloof) als de overheid ziekenhuizen alleen maar achteraf met torenhoge boetes blijft bestraffen?",
                         "contradicts": "it_hid_data",
-                        "contradiction_msg": "Precies! Als systeembeheerder weigerde je zojuist om data te delen, júíst omdat je directeur (jij nu!) bang was voor boetes en reputatieschade. Dit is de doofpotcultuur in de praktijk!",
+                        "contradiction_msg": "Ha! Als IT'er weigerde je zojuist om die hackers-sporen te delen, juist ómdat de directeur (die jij nu bent!) doodsbang was voor deze boetes en imagoschade. Je hebt deze doofpotcultuur letterlijk zelf gecreëerd in de vorige ronde!",
                         "options": [
-                            {"label": "Ziekenhuizen worden bang en gaan incidenten in de doofpot stoppen.", "correct": true, "msg": "Exact. Repressie achteraf doodt transparantie en maakt de keten kwetsbaarder.", "stats": [0, 10, 0]},
-                            {"label": "Geen gevaar. Door boetes investeren ziekenhuizen vanzelf in veiligheid.", "correct": false, "msg": "Fout. Zonder middelen werkt straffen averechts.", "stats": [0, -15, -10]}
+                            {"label": "Ziekenhuisdirecteuren worden zo bang voor de overheid, dat ze incidenten stiekem in de doofpot gaan stoppen.", "correct": true, "msg": "Spijker op zijn kop. Repressie achteraf (met inspecties en boetes) doodt de transparantie die je juist zo hard nodig hebt om de zorgketen samen proactief te beschermen.", "stats": [0, 10, 0]},
+                            {"label": "Er is geen gevaar. Door dreiging van de inspectie investeert iedereen vanzelf het maximale in cybersecurity.", "correct": false, "msg": "Fout. Je kunt een ziekenhuis beboeten wat je wilt, maar als ze het geld en de kennis niet hebben, duwt een boete ze alleen maar sneller de afgrond in.", "stats": [0, -15, -10]}
                         ]
                     }
                 ]
@@ -431,48 +459,48 @@
                 "character": "Mark (Beleidsmaker VWS)",
                 "location": "Den Haag: Ministerie",
                 "visual": "<div class='scene-emoji'>🏛️🚨</div><div class='scene-title'>Crisiskamer Overheid</div>",
-                "intro": "Je bent Ambtenaar Mark in Den Haag. Door tekortkomingen in de sector is een landelijke systeemcrisis ontstaan (WannaCry niveau). De zorg ligt plat.",
+                "intro": "Je bent Ambtenaar Mark. Welkom in het zenuwcentrum van het land. Door verzwegen lekken is een landelijke systeemcrisis ontstaan. Ransomware (WannaCry-niveau) heeft 80 ziekenhuizen lamgelegd.",
                 "tasks": [
                     {
                         "type": "multiple_choice",
-                        "instruction": "DOELOPDRACHT: 80 ziekenhuizen zijn onbereikbaar door de worm. IC-apparatuur valt uit. Welk medisch noodprotocol moet de staat aanbevelen voor patiëntenselectie?",
+                        "instruction": "DOELOPDRACHT: Absolute ramp. Alle beeldschermen op de IC's vallen uit. Ziekenwagens rijden doelloos rond met gillende sirenes. Er zijn veel meer patiënten dan beschikbare bedden. Welk meedogenloos noodprotocol dwing je de sector op?",
                         "options": [
-                            {"label": "Triage (selecteren puur op de medische overlevingskansen).", "correct": true, "msg": "Triage actief. Ghafur et al. (2019) beschrijft hoe dit tijdens WannaCry in het VK bittere realiteit werd.", "stats": [-10, 0, 10]},
-                            {"label": "First in, First out (Behandelen op volgorde van binnenkomst).", "correct": false, "msg": "Fout. Patiënten met milde klachten bezetten dan bedden voor acute trauma's.", "stats": [-40, 0, -20]}
+                            {"label": "We forceren 'Triage'. Artsen moeten nu keihard selecteren wie de beste medische overlevingskansen heeft.", "correct": true, "msg": "Triage is landelijk geactiveerd. Het is ethisch afschuwelijk voor de artsen, maar de enige manier om chaos af te wenden. In hun analyse van de WannaCry-crisis in het VK beschreven Ghafur et al. (2019) hoe dit horrorscenario toen bittere realiteit werd.", "stats": [-10, 0, 10]},
+                            {"label": "We hanteren 'First in, First out'. Wie als eerste binnen wordt gereden in de ambulance krijgt direct voorrang.", "correct": false, "msg": "Dit protocol is dodelijk. Mensen met een verstuikte enkel bezetten nu de laatste bedden, terwijl op de gang slachtoffers met een acute hartstilstand onbehandeld sterven.", "stats": [-40, 0, -20]}
                         ]
                     },
                     {
                         "type": "slider",
-                        "instruction": "Defensie staat klaar om de servers van alle private ziekenhuizen 'hot' over te nemen om de worm centraal te verwijderen. Hoeveel procent (0-100) autonomie pak je de ziekenhuizen hierbij af?",
+                        "instruction": "Het Defensie Cyber Commando staat klaar om de besmette ziekenhuisservers ongevraagd 'hot' over te nemen en het virus met militair geweld te verwijderen. Hoeveel procent (0-100) autonomie pak je als Rijksoverheid af van de private ziekenhuisbestuurders?",
                         "min": 0, "max": 100, "step": 25, "start": 0, "unit": "%",
                         "validate": "val === 100",
-                        "msgSuccess": "Je neemt 100% mandaat. In een Change Healthcare (2024) scenario grijpt de overheid met 'Hard Power' in.",
-                        "msgFail": "Zonder volledig mandaat kan het leger niet ingrijpen. Het systeem stort in.",
+                        "msgSuccess": "Je neemt de volle 100% in handen. Je zet de 'Hard Power' van de staat in. Defensie breekt ongevraagd de servers binnen en killt de worm. Je hebt zojuist de vitale volksgezondheid van het land gered.",
+                        "msgFail": "Je durft niet door te pakken. Zonder het absolute, 100% wettelijke mandaat kan het leger onmogelijk opereren. Terwijl de juristen kibbelen, stort het zorgsysteem definitief in.",
                         "penalty": [-40, -40, -40]
                     },
                     {
                         "type": "multiple_choice",
-                        "instruction": "Ziekenhuisbestuurders protesteren: de overheid (Defensie) breekt hun privacywetten. Hoe legitimeer je het overheidsingrijpen?",
+                        "instruction": "De ziekenhuisdirecteuren reageren woest. Ze beschuldigen de overheid (Defensie) van inbraak, privacyschending en inbreuk op hun ondernemingsvrijheid. Hoe legitimeer jij dit ongekende overheidsingrijpen?",
                         "options": [
-                            {"label": "In een nationale systeemcrisis wijkt private autonomie voor de fysieke veiligheid en de volksgezondheid.", "correct": true, "msg": "De ultieme staatsmacht wordt gelegitimeerd door de overkoepelende zorgplicht.", "stats": [0, 10, 10]},
-                            {"label": "We negeren de wetten gewoon even tijdelijk.", "correct": false, "msg": "Onacceptabel in een rechtsstaat. Dit creëert een constitutionele crisis.", "stats": [0, 0, -30]}
+                            {"label": "In een nationale systeemcrisis wijkt private vrijheid altijd voor de collectieve veiligheid en het recht op leven.", "correct": true, "msg": "Sterk! Je onderstreept dat de ultieme macht van de overheid wordt gelegitimeerd doordat de staat uiteindelijk de eindverantwoordelijkheid draagt voor de volksgezondheid.", "stats": [0, 10, 10]},
+                            {"label": "We negeren de bestaande contracten en privacywetten gewoon even tijdelijk, dat zoeken we na de crisis wel uit.", "correct": false, "msg": "Hiermee jaag je heel politiek Den Haag tegen je in het harnas. Je creëert een constitutionele crisis en na de ramp regent het miljardenclaims.", "stats": [0, 0, -30]}
                         ]
                     },
                     {
                         "type": "input",
-                        "instruction": "Er heerst massale paniek onder de bevolking. Welk orgaan (4 letters) moet per direct de nationale communicatie en woordvoering overnemen? (Tip: N_ _ _)",
+                        "instruction": "Elke ziekenhuisdirecteur vertelt op tv een ander warrig verhaal. Welk overheidsorgaan (4 letters) geef je per direct de macht om als enige de nationale woordvoering te doen? (Tip: Nationaal Coördinator...)",
                         "answer": "NCTV",
                         "synonyms": ["NCSC", "RIVM"],
-                        "msgSuccess": "De NCTV centraliseert de communicatie en voorkomt verdere chaos.",
-                        "msgFail": "Zonder centrale communicatie weigeren ambulances uit te rijden.",
+                        "msgSuccess": "Je draagt het over aan de NCTV. Eén strak, centraal verhaal stelt de burgers gerust. De paniek neemt af.",
+                        "msgFail": "Door een gebrek aan centrale woordvoering ontstaat er chaos. Mensen bellen massaal 112 voor kleine kwaaltjes, waardoor de centrale bezwijkt.",
                         "penalty": [-10, 0, -20]
                     },
                     {
                         "type": "multiple_choice",
-                        "instruction": "De crisis is gestopt door het leger. Wat is het beleidsadvies dat jij aan de minister uitbrengt om dit voortaan te voorkomen?",
+                        "instruction": "De crisis is eindelijk bedwongen. In je eindevaluatie stel je dat de governance-kloof (achteraf straffen versus crisis ingrijpen) definitief gesloten moet worden. Wat adviseer je de minister als oplossing?",
                         "options": [
-                            {"label": "Het instellen van een proactief 'Cyber-OMT' dat preventief technische ondersteuning mag bieden in het netwerk.", "correct": true, "msg": "Exact! Geen boetes achteraf, maar een proactief en beschermend mandaat vóóraf.", "stats": [20, 20, 20]},
-                            {"label": "De ziekenhuizen zwaarder straffen met boetes als ze in de toekomst nog eens gehackt worden.", "correct": false, "msg": "Fout. Dat heeft de doofpot-crisis juist veroorzaakt. Dat is de 'governance-kloof'.", "stats": [0, -10, -20]}
+                            {"label": "Het instellen van een proactief 'Cyber-OMT' met wettelijk mandaat om preventief technische steun te bieden aan de vitale zorgketen.", "correct": true, "msg": "Schot in de roos! Geen reactieve boetes meer, maar een proactief, beschermend mandaat vóóraf. Je hebt de crisis overleefd!", "stats": [20, 20, 20]},
+                            {"label": "De inspecties nog verder opschroeven en de boetes verviervoudigen, zodat ze het niet nog eens uit hun hoofd laten gehackt te worden.", "correct": false, "msg": "Een historische misstap. Je voedt de angst en de doofpotcultuur, waardoor het netwerk tijdens de eerstvolgende hack nog sneller zal bezwijken.", "stats": [0, -10, -20]}
                         ]
                     }
                 ]
@@ -481,7 +509,7 @@
     };
 
     /* =========================================================================
-       GAME ENGINE & LOGIC
+       GAME ENGINE & LOGIC (Met Checkpoint Systeem en SCROLL FIX)
        ========================================================================= */
     let state = { pv: 100, si: 100, tr: 100 };
     let strikes = 0;
@@ -490,9 +518,13 @@
     let currentTaskIndex = 0;
     let gameFlags = {};
 
+    let checkpointState = { pv: 100, si: 100, tr: 100 };
+    let checkpointFlags = {};
+
     const roomVisual = document.getElementById('room-visual');
     const charInfo = document.getElementById('char-info');
     const consolePanel = document.getElementById('console-panel');
+    const mainArea = document.getElementById('main-area'); 
     const inconsistencyModal = document.getElementById('inconsistency-modal');
     const modalText = document.getElementById('modal-text');
 
@@ -520,6 +552,17 @@
         if (state.tr === 0) return triggerGameOver("Het publiek heeft alle vertrouwen verloren.");
     }
 
+    function scrollToBottom() {
+        consolePanel.scrollTop = consolePanel.scrollHeight;
+        mainArea.scrollTop = mainArea.scrollHeight;
+    }
+
+    // Fix voor de eerste pagina: Scrollt altijd naar boven, in plaats van naar onder!
+    function scrollToTop() {
+        consolePanel.scrollTop = 0;
+        mainArea.scrollTop = 0;
+    }
+
     function triggerGameOver(reason) {
         isGameOver = true;
         roomVisual.innerHTML = "<div class='scene-emoji'>💥</div><div class='scene-title' style='color:#ff5555;'>CRASH</div>";
@@ -527,10 +570,21 @@
             <div class="game-over-box">
                 <div class="game-over-title">GAME OVER</div>
                 <h3>${reason}</h3>
-                <p>De kloof tussen de techniek en het bestuur is jullie fataal geworden.</p>
-                <button class="action-btn" onclick="location.reload()" style="margin-top:20px;">[ OPNIEUW PROBEREN ]</button>
+                <p>Je acties hebben geleid tot de ineenstorting van de organisatie. De kloof tussen de theorie en de werkvloer was te groot.</p>
+                <button class="action-btn" onclick="restartCurrentStage()" style="margin-top:20px;">[ PROBEER DEZE ROL OPNIEUW ]</button>
             </div>
         `;
+        scrollToBottom();
+    }
+
+    function restartCurrentStage() {
+        state = { ...checkpointState };
+        gameFlags = { ...checkpointFlags };
+        strikes = 0;
+        isGameOver = false;
+        currentTaskIndex = 0;
+        updateStats(0, 0, 0, true);
+        startStage();
     }
 
     function printText(text, cssClass='') {
@@ -539,7 +593,7 @@
         d.className = `dialogue-box ${cssClass}`;
         d.innerHTML = text;
         consolePanel.appendChild(d);
-        consolePanel.scrollTop = consolePanel.scrollHeight;
+        scrollToBottom();
     }
 
     function clearConsole() { if(!isGameOver) consolePanel.innerHTML = ''; }
@@ -558,7 +612,7 @@
         charInfo.innerHTML = "Persoon: Bezoeker<br>Kies je verdieping...";
         clearConsole();
         
-        printText("Welkom bij <b>CyberCrisis: The Adventure</b>.<br><br>Ervaar hoe de 'governance-kloof' ontstaat doordat iedereen met een ander belang stuurt. Je speelt dit spel vanuit 4 perspectieven.");
+        printText("Welkom bij <b>CyberCrisis: The Adventure</b>.<br><br>Ervaar hoe de 'governance-kloof' ontstaat doordat iedereen in de zorgketen handelt vanuit een ander eigenbelang. Je speelt dit spel vanuit 4 perspectieven. Lukt het jou om de ultieme systeemcrisis te stoppen?");
         
         const floors = [
             { label: "Begane Grond: SEH (Speel als Arts)", target: 0 },
@@ -575,13 +629,19 @@
                 if (f.target === currentStageIndex + 1) {
                     currentStageIndex++;
                     currentTaskIndex = 0;
+                    
+                    checkpointState = { ...state };
+                    checkpointFlags = { ...gameFlags };
+                    
                     startStage();
                 } else {
-                    printText("De liftdeuren weigeren open te gaan. Je moet het verhaal chronologisch doorlopen.", "feed-error");
+                    printText("De liftdeuren weigeren open te gaan. De overheid eist dat je het scenario chronologisch doorloopt.", "feed-error");
                 }
             };
             consolePanel.appendChild(b);
         });
+        // Gebruik de nieuwe scrollToTop fix voor de lift/startpagina!
+        scrollToTop(); 
     }
 
     function startStage() {
@@ -597,6 +657,7 @@
         b.innerText = "[ START WERKDIENST ]";
         b.onclick = () => { b.remove(); renderTask(); };
         consolePanel.appendChild(b);
+        scrollToTop(); // Zorgt er ook voor dat je aan het begin van een nieuw level netjes bovenaan begint met lezen.
     }
 
     let currentSelectedClick = null;
@@ -610,7 +671,6 @@
         
         let html = `<div class="dialogue-box"><div class="instruction-text">${task.instruction}</div>`;
 
-        // 1. Multiple Choice
         if(task.type === "multiple_choice") {
             html += `<div class="mc-options">`;
             task.options.forEach((opt, idx) => {
@@ -623,11 +683,8 @@
             document.querySelectorAll('.mc-btn').forEach(btn => {
                 btn.onclick = function() {
                     const selectedOpt = task.options[this.getAttribute('data-idx')];
-                    
-                    // Set flag if option has one
                     if(selectedOpt.flag) gameFlags[selectedOpt.flag] = true;
                     
-                    // Check for contradictions (Pop-up logic)
                     if(task.contradicts && gameFlags[task.contradicts]) {
                         showModal(task.contradiction_msg, () => processTask(selectedOpt.correct, task, selectedOpt));
                     } else if (selectedOpt.contradicts && gameFlags[selectedOpt.contradicts]) {
@@ -638,8 +695,6 @@
                 };
             });
         }
-        
-        // 2. Input
         else if(task.type === "input") {
             html += `<div style="text-align:center;"><input type="text" id="t-input" class="simple-input" autocomplete="off" placeholder="Typ hier..."></div></div>
                      <button class="action-btn" id="task-submit">[ BEVESTIGEN ]</button>`;
@@ -656,8 +711,6 @@
                 processTask(isCorrect, task);
             };
         }
-
-        // 3. Slider
         else if(task.type === "slider") {
             html += `<div class="range-container">
                         <div class="range-value" id="rv-disp">${task.start}${task.unit}</div>
@@ -673,8 +726,6 @@
                 processTask(isCorrect, task);
             };
         }
-
-        // 4. ClickText
         else if(task.type === "clicktext") {
             currentSelectedClick = null;
             html += `<div class="clickable-text">${task.content}</div></div>
@@ -690,11 +741,10 @@
                     document.getElementById('task-submit').disabled = false;
                 };
             });
-
             document.getElementById('task-submit').onclick = () => processTask(currentSelectedClick === task.correctVal, task);
         }
 
-        consolePanel.scrollTop = consolePanel.scrollHeight;
+        scrollToBottom();
     }
 
     function processTask(isCorrect, task, selectedOption = null) {
@@ -716,7 +766,7 @@
         
         const fb = document.createElement('div');
         fb.className = `dialogue-box ${isCorrect ? 'feed-success' : 'feed-error'}`;
-        fb.innerHTML = isCorrect ? `✓ <b>ACTIE GESLAAGD:</b> ${msg}` : `✗ <b>FOUT:</b> ${msg}`;
+        fb.innerHTML = isCorrect ? `✓ <b>ACTIE GESLAAGD:</b> ${msg}` : `✗ <b>GEFAALD:</b> ${msg}`;
         consolePanel.appendChild(fb);
 
         currentTaskIndex++;
@@ -730,9 +780,17 @@
             };
             consolePanel.appendChild(b);
         } else {
-            setTimeout(renderTask, 800);
+            const nextBtn = document.createElement('button');
+            nextBtn.className = "action-btn";
+            nextBtn.innerText = "[ VOLGENDE OPDRACHT ]";
+            nextBtn.style.marginTop = "10px";
+            nextBtn.onclick = () => {
+                nextBtn.remove();
+                renderTask();
+            };
+            consolePanel.appendChild(nextBtn);
         }
-        consolePanel.scrollTop = consolePanel.scrollHeight;
+        scrollToBottom();
     }
 
     function showFinalScreen() {
@@ -744,14 +802,15 @@
             <div class="game-over-box" style="border-color: #0000aa;">
                 <div class="game-over-title" style="color:#0000aa;">CONCLUSIE</div>
                 <p><b>Je hebt de escalatieladder overleefd!</b></p>
-                <p style="text-align:left;">Dit avontuur laat de 'governance-kloof' zien. De arts, IT'er, bestuurder en wetgever handelen vaak onbedoeld tegenstrijdig ten opzichte van elkaars belangen. De overheid die momenteel pas achteraf straft met boetes of pas regie neemt als het land platligt, is een risico voor de veiligheid.</p>
-                <p style="text-align:left; color:#0000aa;"><b>ONZE BELEIDSOPLOSSING:</b><br>Geef het NCSC een wettelijk mandaat als <b>Cyber-OMT</b>. Een team dat proactief technische steun biedt en meedenkt op de werkvloer, in plaats van de reactieve boetecultuur.</p>
+                <p style="text-align:left;">Dit avontuur laat haarfijn de 'governance-kloof' zien. De arts, de IT'er, de bestuurder en de wetgever handelen allemaal onbedoeld tegenstrijdig ten opzichte van elkaars belangen. Een overheid die momenteel pas achteraf straft met torenhoge boetes of pas regie neemt als het land platligt, vormt een immens risico voor de patiëntveiligheid.</p>
+                <p style="text-align:left; color:#0000aa;"><b>ONZE BELEIDSOPLOSSING:</b><br>Geef het NCSC een wettelijk mandaat als <b>Cyber-OMT</b>. Een team dat met mandaat proactief technische steun biedt in tijden van crisis, en daarmee de reactieve boetecultuur doorbreekt.</p>
                 <button class="action-btn" onclick="location.reload()">[ SPEEL OPNIEUW ]</button>
             </div>
         `;
         const d = document.createElement('div');
         d.innerHTML = finale;
         consolePanel.appendChild(d);
+        scrollToBottom();
     }
 
     window.onload = initGame;
