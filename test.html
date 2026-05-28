@@ -221,7 +221,7 @@
         @media (max-width: 768px) {
             body { padding: 0; }
             #game-window { 
-                height: 100dvh; /* Past zich perfect aan het telefoonscherm aan */
+                height: 100dvh; 
                 max-width: 100%; 
                 border: none; 
                 box-shadow: none;
@@ -230,10 +230,9 @@
             .stats-bar { padding: 5px; gap: 2px; }
             .stat-box { width: 32%; font-size: 0.75em; gap: 2px; }
             
-            /* Hier gebeurt de magie voor mobiel scollen */
             #main-area { 
                 flex-direction: column; 
-                overflow-y: auto; /* De HELE container scrolt nu */
+                overflow-y: auto; 
             }
             #view-panel { 
                 width: 100%; 
@@ -248,7 +247,7 @@
                 flex-grow: 1; 
                 padding: 10px; 
                 box-sizing: border-box; 
-                overflow-y: visible; /* Schakelt onafhankelijk scrollen uit */
+                overflow-y: visible; 
                 height: auto; 
             }
             
@@ -262,7 +261,7 @@
 
 <div id="game-window">
     <div class="header">
-        <span id="loc-header">CYBER ADVENTURE v4.0</span>
+        <span id="loc-header">CYBER ADVENTURE v4.1</span>
         <span style="cursor: pointer;" onclick="location.reload()">[X]</span>
     </div>
     
@@ -272,6 +271,7 @@
         <div class="stat-box">PUBLIEK: <div class="stat-bar-outer"><div id="stat-tr" class="stat-bar-inner" style="width: 100%;"></div></div></div>
     </div>
     
+    <!-- Dit is het vlak dat op mobiel in zijn geheel scrolt -->
     <div id="main-area">
         <div id="view-panel">
             <div class="scene-image" id="room-visual"></div>
@@ -280,6 +280,7 @@
         <div id="console-panel"></div>
     </div>
 
+    <!-- The Inconsistency Modal -->
     <div id="inconsistency-modal">
         <div class="modal-content">
             <div class="modal-title">⚠️ INCONSISTENTIE DETECTEERD!</div>
@@ -291,7 +292,7 @@
 
 <script>
     /* =========================================================================
-       HET JSON DATAMODEL (Inclusief bronnen & dualiteits-checks)
+       HET JSON DATAMODEL
        ========================================================================= */
     const gameData = {
         "stages": [
@@ -523,7 +524,7 @@
     const roomVisual = document.getElementById('room-visual');
     const charInfo = document.getElementById('char-info');
     const consolePanel = document.getElementById('console-panel');
-    const mainArea = document.getElementById('main-area'); // Add reference to main-area for mobile scrolling
+    const mainArea = document.getElementById('main-area'); 
     const inconsistencyModal = document.getElementById('inconsistency-modal');
     const modalText = document.getElementById('modal-text');
 
@@ -551,10 +552,15 @@
         if (state.tr === 0) return triggerGameOver("Het publiek heeft alle vertrouwen verloren.");
     }
 
-    // Aangepaste scroll-functie: Scrolt de console op PC, of de hele main-area op mobiel
     function scrollToBottom() {
         consolePanel.scrollTop = consolePanel.scrollHeight;
         mainArea.scrollTop = mainArea.scrollHeight;
+    }
+
+    // Fix voor de eerste pagina: Scrollt altijd naar boven, in plaats van naar onder!
+    function scrollToTop() {
+        consolePanel.scrollTop = 0;
+        mainArea.scrollTop = 0;
     }
 
     function triggerGameOver(reason) {
@@ -623,16 +629,19 @@
                 if (f.target === currentStageIndex + 1) {
                     currentStageIndex++;
                     currentTaskIndex = 0;
+                    
                     checkpointState = { ...state };
                     checkpointFlags = { ...gameFlags };
+                    
                     startStage();
                 } else {
-                    printText("De liftdeuren weigeren open te gaan. Je moet het scenario chronologisch doorlopen.", "feed-error");
+                    printText("De liftdeuren weigeren open te gaan. De overheid eist dat je het scenario chronologisch doorloopt.", "feed-error");
                 }
             };
             consolePanel.appendChild(b);
         });
-        scrollToBottom();
+        // Gebruik de nieuwe scrollToTop fix voor de lift/startpagina!
+        scrollToTop(); 
     }
 
     function startStage() {
@@ -648,7 +657,7 @@
         b.innerText = "[ START WERKDIENST ]";
         b.onclick = () => { b.remove(); renderTask(); };
         consolePanel.appendChild(b);
-        scrollToBottom();
+        scrollToTop(); // Zorgt er ook voor dat je aan het begin van een nieuw level netjes bovenaan begint met lezen.
     }
 
     let currentSelectedClick = null;
